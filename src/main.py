@@ -117,6 +117,33 @@ class Object(pygame.sprite.Sprite, AbstractObject):
     def applyForce(self, force: pm.Vector2, point: pm.Vector2):
         self.forces.append((force, point))
 
+    def getAxes(self):
+        axes: list[pm.Vector2] = list()
+        for i in range(len(self.vertices)):
+            edge = self.vertices[i] - self.vertices[i - 1]
+            axes.append(pm.Vector2(-edge.y, edge.x))
+        return axes
+
+    def project(self, axis):
+        min = axis.dot(self.vertices[0])
+        max = min
+        for i in range(1, len(self.vertices)):
+            proj = axis.dot(self.vertices[i])
+            if proj < min:
+                min = proj
+            if proj > max:
+                max = proj
+        return pm.Vector2(min, max)
+
+    def checkCollision(self, other: Object):
+        axes = self.getAxes()
+        axes.extend(other.getAxes())
+        for axis in axes:
+            proj_s = self.project(axis)
+            proj_o = other.project(axis)
+            
+        return None
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
@@ -140,6 +167,8 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+        _object.applyForce(pm.Vector2(0, 98), pm.Vector2(0, 0))
 
         if time.perf_counter() < start_time + 1:
             _object.applyForce(pm.Vector2(100, 10), pm.Vector2(1000, 0))
